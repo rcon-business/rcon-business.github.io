@@ -393,6 +393,17 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
 .rc-ct-a{display:flex;flex-wrap:wrap;gap:10px}
 .rc-ct-btn{text-decoration:none}
 .rc-ct-l{color:var(--accent-ink);font-weight:600;text-decoration:none}
+
+/* chat como interação principal */
+.hero-chat{scroll-margin-top:calc(var(--hdr,96px) + 12px)}
+.hero-chat .rc-chat{height:min(600px,calc(100svh - var(--hdr,96px) - 40px));min-height:480px}
+.hero-cta{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;background:var(--sunk,#E6E8EB);color:var(--ink);font-size:.98rem;line-height:1.5}
+.hero-cta b{color:var(--head,#0D2340)}
+.hero-dot{flex:none;width:10px;height:10px;margin-top:7px;border-radius:50%;background:var(--pos,#1D7A54);box-shadow:0 0 0 4px rgba(29,122,84,.18)}
+@media (min-width:1000px){.hero-vis{padding:0 0 24px 24px}}
+@media (max-width:999px){main > section.hero{padding-top:28px}.hero .lead{display:none}.hero-copy{gap:16px}.hero-grid{gap:20px}.hero .acts,.hero .facts{display:none}.hero-vis{padding:0}.hero-chat .rc-chat{height:min(560px,calc(100svh - 110px));min-height:440px}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hero-cta b{color:var(--ink)}}
+:root[data-theme="dark"] .hero-cta b{color:var(--ink)}
 </style>
 
 <a class="skip" href="#inicio">Pular para o conteúdo</a>
@@ -426,10 +437,11 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
     <div class="hero-copy" data-enter>
       <p class="kicker">Hub de Desenvolvimento de Negócios · desde 2016</p>
       <h1>Gestão, vendas e IA para empresas que faturam <span class="who">de R$ 167 mil a R$ 500 mil por mês</span></h1>
-      <p class="lead">Você fez a parte do empreendedor. A R&amp;CON faz a do administrador: organiza o caixa, monta o processo de vendas e põe dados e IA para trabalhar, até a empresa deixar de depender de você em cada decisão.</p>
+      <p class="lead">Você fez a parte do empreendedor. A R&amp;CON faz a do administrador: organiza o caixa, monta o processo de vendas e põe dados e IA para trabalhar.</p>
+      <p class="hero-cta"><span class="hero-dot" aria-hidden="true"></span><span><b>Comece pela conversa.</b> Conte o que pesa hoje na sua empresa. O assistente mostra por onde começar e, se fizer sentido, já marca a reunião com um executivo.</span></p>
       <div class="acts">
-        <a class="btn btn-main" href="#conversa">Falar com o time <span class="arr">→</span></a>
         <a class="btn btn-alt" href="#produtos">Ver os produtos</a>
+        <a class="btn btn-alt" href="#metodo">Conhecer o método</a>
       </div>
       <div class="facts">
         <p><b>5</b> produtos, contratados juntos ou separados</p>
@@ -437,28 +449,8 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
       </div>
     </div>
     <div class="hero-vis" data-enter>
-      <div class="ui" aria-label="Exemplo do relatório mensal do Lucro à Vista">
-        <div class="ui-bar"><span class="dots"><i></i><i></i><i></i></span><span>Lucro à Vista · relatório de outubro</span><span class="chip">exemplo</span></div>
-        <div class="ui-body">
-          <div class="kpis">
-            <div class="kpi"><span>Faturamento</span><b>R$ 312 mil</b><span class="chip pos">+8% vs set</span></div>
-            <div class="kpi"><span>Margem de contribuição</span><b>34%</b><span class="chip neg">−3 p.p.</span></div>
-            <div class="kpi"><span>Sobrou no caixa</span><b>R$ 41 mil</b><span class="chip pos">meta: 35 mil</span></div>
-            <div class="kpi"><span>Ponto de equilíbrio</span><b>R$ 236 mil</b><span class="chip">76% do faturamento</span></div>
-          </div>
-          <div>
-            <p class="lbl" style="margin-bottom:6px">Caixa projetado · próximas 13 semanas</p>
-            <div class="bars" aria-hidden="true"><i style="height:62%"></i><i style="height:58%"></i><i style="height:66%"></i><i class="low" style="height:28%"></i><i style="height:54%"></i><i style="height:70%"></i><i style="height:74%"></i><i style="height:69%"></i><i style="height:78%"></i><i style="height:82%"></i><i style="height:76%"></i><i style="height:85%"></i><i style="height:90%"></i></div>
-          </div>
-          <div>
-            <p class="lbl" style="margin-bottom:8px">Decisões do mês</p>
-            <ul class="decisions">
-              <li class="done">Rever preço da linha B: margem abaixo de 20%</li>
-              <li>Antecipar recebíveis antes da semana 4</li>
-              <li>Fixar pró-labore em R$ 18 mil</li>
-            </ul>
-          </div>
-        </div>
+      <div class="hero-chat" id="conversa">
+        <div id="rconChat"></div>
       </div>
     </div>
   </div>
@@ -834,15 +826,13 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
 </section>
 
 <!-- 13. CLOSE + FORM -->
-<section id="conversa" class="band" data-stop-section="como-funciona">
+<section id="fale" class="band" data-stop-section="como-funciona">
   <div class="wrap close-grid">
     <div style="display:flex;flex-direction:column;gap:20px">
       <p class="kicker">Fale com o time da R&amp;CON</p>
       <h2 class="close-type">Conte como está a sua empresa. <em>A gente mostra por onde começar.</em></h2>
-      <p class="lead">Converse agora com o assistente da R&amp;CON. Ele tira suas dúvidas e, quando você quiser, marca a reunião com um executivo direto na agenda.</p>
-    </div>
-    <div>
-      <div id="rconChat"></div>
+      <p class="lead">O assistente da R&amp;CON tira suas dúvidas agora e, quando você quiser, marca a reunião com um executivo direto na agenda.</p>
+      <div class="acts"><a class="btn btn-main" href="#conversa">Conversar com o assistente <span class="arr">→</span></a></div>
     </div>
   </div>
 </section>
