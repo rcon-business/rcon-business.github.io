@@ -485,6 +485,7 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
         <p class="pain-count" id="painCount">0 de 8 marcadas</p>
         <p class="pain-msg" id="painMsg">Duas marcas ou mais quase sempre têm a mesma causa.</p>
         <p class="small" id="painSub">A empresa cresceu mais rápido que a gestão. Trabalhar mais horas não resolve isso. Método resolve.</p>
+        <a class="btn btn-main" href="maturidade.html" style="margin-top:16px">Medir o nível da minha empresa <span class="arr">→</span></a>
       </aside>
     </div>
   </div>
@@ -535,6 +536,7 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
       <h2>Um produto para cada parte da empresa</h2>
       <p class="lead">Quatro produtos para empresas em crescimento e um para quem está começando. Cada um pode ser contratado sozinho.</p>
     </div>
+    <p class="combo diag-link" style="margin-bottom:24px"><b>Não sabe por onde começar?</b><span>Em 4 minutos, o diagnóstico mostra o nível de cada área da sua empresa, aonde ela pode chegar e qual produto atacar primeiro.</span><a class="btn btn-main" href="maturidade.html">Fazer o diagnóstico da empresa <span class="arr">→</span></a></p>
     <div class="pcards">
       <a class="pcard" href="#lucro-a-vista">
         <span class="pico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M6 16v-5"/><path d="M11 16V8"/><path d="M16 16v-3"/><path d="M20 4l-5 5-3-2-5 4"/></svg></span>
@@ -1225,9 +1227,9 @@ function trackAula50(){if(!aulaTracked){aulaTracked=true;track('ViewContent',{co
   if(!URL_AGENTE&&!temClaude){semChat()}
   else{
     render();
-    /* diagnóstico do time comercial (diagnostico.html): chega pronto e vira a primeira mensagem */
+    /* diagnósticos (diagnostico.html e maturidade.html): chega pronto e vira a primeira mensagem */
     try{const diag=sessionStorage.getItem('rcon_diag');
-      if(diag&&URL_AGENTE){sessionStorage.removeItem('rcon_diag');st.interesse='Motor Comercial';save();
+      if(diag&&URL_AGENTE){const di=sessionStorage.getItem('rcon_diag_int');sessionStorage.removeItem('rcon_diag');sessionStorage.removeItem('rcon_diag_int');st.interesse=di||'Motor Comercial';save();
         setTimeout(()=>{const s=document.getElementById('conversa');if(s)s.scrollIntoView({block:'start'});enviar(diag.slice(0,1500))},400)}}catch(e){}
     if(!URL_AGENTE){
       modo='indisponivel';
