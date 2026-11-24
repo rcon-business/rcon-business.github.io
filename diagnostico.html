@@ -54,7 +54,7 @@ select.sel{width:100%;border:1px solid var(--linha);border-radius:8px;padding:10
 .etapa{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:8px;padding:10px 12px;color:#fff;margin:0 auto;width:100%}
 .etapa .r{font-size:13px;opacity:.9}
 .etapa .num{font-size:22px;font-weight:700}
-.e1{background:var(--azul);width:100%}
+.e1{background:var(--azul);width:100%}.e1.chave{background:#B91C1C;box-shadow:0 0 0 3px rgba(185,28,28,.18)}.e1.chave .num{font-size:26px}
 .e2{background:#1B3A5E;width:92%}
 .e3{background:#2B2F36;width:84%}
 .e4{background:var(--verm);width:76%}
@@ -139,7 +139,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
   <section>
     <div class="card">
       <h2><span class="n">1</span>Números da sua empresa</h2>
-      <p class="sub">Preencha com os números da sua empresa. Se não souber algum, use a média sugerida ao lado.</p>
+      <p class="sub">Preencha meta, ticket e ciclo da sua empresa. As taxas já vêm com médias de mercado; se conhecer os seus números, abra o bloco de médias e ajuste.</p>
 
       <div class="campo">
         <div>
@@ -172,6 +172,20 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 
       <div class="classe" id="classe"></div>
 
+      <div class="so-equipe">
+        <div class="campo">
+          <div>
+            <label class="chk"><input type="checkbox" id="temBdr"> A empresa faz ou quer prospecção ativa (BDR)</label>
+            <div class="peq">Opcional e complementar. A base precisa ser a geração de contatos (marketing): depender só de pessoas prospectando raramente entrega volume constante.</div>
+          </div>
+          <div class="dica"><b>BDR</b> é quem procura empresas que ainda não conhecem a marca e marca reuniões para os vendedores.</div>
+        </div>
+
+      </div>
+
+      <p class="peq" id="mediasTxt" style="margin-top:12px"></p>
+      <details class="premissas" id="medias" style="margin-top:4px">
+        <summary>Ajustar as médias de mercado</summary>
       <div class="campo">
         <div>
           <label for="fech">Taxa de fechamento (oportunidade que vira venda)</label>
@@ -196,30 +210,22 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
         <div class="dica">Média sugerida: <b>25%</b> (de cada 4 contatos interessados, 1 vira reunião ou proposta).<br><button class="usar" type="button" data-set="conv" data-v="25">Usar 25%</button></div>
       </div>
 
-      <div class="so-equipe">
+        <div class="so-equipe">
         <div class="campo">
           <div>
             <label for="capsdr">Contatos que cada SDR qualifica por mês</label>
-            <div class="entrada"><input id="capsdr" inputmode="numeric" value="300"><span>por mês</span></div>
+            <div class="entrada"><input id="capsdr" inputmode="numeric" value="200"><span>por mês</span></div>
           </div>
-          <div class="dica"><b>SDR</b> é quem atende e qualifica os contatos que chegam. Média sugerida: <b>300 por mês</b> (cerca de 15 por dia útil).<br><button class="usar" type="button" data-set="capsdr" data-v="300">Usar 300</button></div>
-        </div>
-
-        <div class="campo">
-          <div>
-            <label class="chk"><input type="checkbox" id="temBdr"> A empresa faz ou quer prospecção ativa (BDR)</label>
-            <div class="peq">Opcional. Depende da natureza do negócio: faz sentido quando é preciso ir atrás do cliente, e não só esperar ele chegar.</div>
-          </div>
-          <div class="dica"><b>BDR</b> é quem procura empresas que ainda não conhecem a marca e marca reuniões para os vendedores.</div>
+          <div class="dica"><b>SDR</b> é quem atende e qualifica os contatos que chegam. Média real de mercado: <b>200 por mês</b> (cerca de 10 por dia útil, contando retornos e contatos que somem).<br><button class="usar" type="button" data-set="capsdr" data-v="200">Usar 200</button></div>
         </div>
 
         <div id="blocoBdr" style="display:none">
           <div class="campo">
             <div>
               <label for="pAtiva">Parte das oportunidades que vem da prospecção ativa</label>
-              <div class="entrada"><input id="pAtiva" inputmode="decimal" value="30"><span>%</span></div>
+              <div class="entrada"><input id="pAtiva" inputmode="decimal" value="20"><span>%</span></div>
             </div>
-            <div class="dica">Sem histórico, comece com <b>30%</b> e ajuste depois.<br><button class="usar" type="button" data-set="pAtiva" data-v="30">Usar 30%</button></div>
+            <div class="dica">O BDR é complemento: sem histórico, use <b>20%</b>. A maior parte deve vir da geração de contatos (marketing).<br><button class="usar" type="button" data-set="pAtiva" data-v="20">Usar 20%</button></div>
           </div>
           <div class="campo">
             <div>
@@ -229,19 +235,19 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
             <div class="dica">Média sugerida: <b>12 reuniões realizadas por mês</b> (cerca de 15 marcadas, com 20% de faltas).<br><button class="usar" type="button" data-set="capbdr" data-v="12">Usar 12</button></div>
           </div>
         </div>
-      </div>
-
+        </div>
       <div class="campo">
         <div>
           <label>Folga para férias, rampa e meses fracos</label>
           <div class="seg" id="margem">
             <button type="button" data-m="0">Sem folga</button>
-            <button type="button" data-m="10" class="ativo">10%</button>
-            <button type="button" data-m="15">15%</button>
+            <button type="button" data-m="10">10%</button>
+            <button type="button" data-m="15" class="ativo">15%</button>
           </div>
         </div>
-        <div class="dica">Sugestão: <b>10% a 15%</b>. Cobre gente nova ainda aprendendo, férias e queda sazonal.</div>
+        <div class="dica">Média: <b>15%</b>. Só as férias já tiram 1 mês em 12 (8%); somando gente nova em rampa e meses fracos, chega a 15%.</div>
       </div>
+      </details>
     </div>
 
     <div class="card">
@@ -325,7 +331,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
       <h2><span class="n">3</span>O que essa meta exige</h2>
       <p class="sub">O caminho de trás para frente: da meta até os contatos que precisam entrar.</p>
       <div class="funil">
-        <div class="etapa e1"><div class="r">Contatos que precisam chegar por mês</div><div class="num" id="rLeads">0</div></div>
+        <div class="etapa e1 chave"><div class="r">Contatos que precisam chegar por mês<br><span style="font-size:12px">o maior desafio: geração de contatos (marketing)</span></div><div class="num" id="rLeads">0</div></div>
         <div class="seta" id="sConv">↓</div>
         <div class="etapa e2"><div class="r" id="rOportTxt">Oportunidades (reuniões ou propostas)</div><div class="num" id="rOport">0</div></div>
         <div class="seta" id="sFech">↓</div>
@@ -333,6 +339,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
         <div class="seta">↓</div>
         <div class="etapa e4"><div class="r">Meta do mês</div><div class="num" id="rMeta">R$ 0</div></div>
       </div>
+      <div id="avisoLeads"></div>
       <div id="avisoTime"></div>
       <div class="formula" id="formula"></div>
       <p class="estat">Estimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.</p>
@@ -420,8 +427,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     alto:{nome:"venda grande (ticket alto, ciclo longo)", min:1, max:3}
   };
   var CAMPOS=["meta","ticket","fech","cap","conv","capsdr","pAtiva","capbdr","atuais","sdrAtuais","bdrAtuais","fatAtual","salGestor","salSdr","salBdr","recrut"];
-  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"300",pAtiva:"30",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",fatAtual:"200.000",salGestor:"7.000",salSdr:"3.000",salBdr:"4.000",recrut:"1",ciclo:"medio",margem:10,coord:"nao",crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
-  var st={coord:"nao",plano:"motor",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",aCop:true,aSdr:false,aBdr:false,temBdr:false,oculto:true};
+  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"200",pAtiva:"20",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",fatAtual:"200.000",salGestor:"7.000",salSdr:"3.000",salBdr:"4.000",recrut:"1",ciclo:"medio",margem:15,coord:"nao",crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
+  var st={coord:"nao",plano:"motor",ciclo:"medio",margem:15,crm:"sim",sdrIa:"sim",bdrIa:"nao",aCop:true,aSdr:false,aBdr:false,temBdr:false,oculto:true};
   var $=function(id){return document.getElementById(id)};
   var R={};
 
@@ -496,6 +503,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     $("sConv").textContent="↓ "+dec(conv*100)+"% viram oportunidade";
     $("sFech").textContent="↓ "+dec(fech*100)+"% fecham";
 
+    $("mediasTxt").innerHTML='<b>Médias de mercado usadas:</b> fechamento de <b>'+dec(fech*100)+'%</b> · <b>'+int(cap)+'</b> oportunidades por vendedor · <b>'+dec(conv*100)+'%</b> dos contatos viram oportunidade'+(simples?'':' · SDR qualifica <b>'+int(capsdr)+'</b> contatos por mês')+(usaBdr?' · <b>'+dec(pAtiva*100)+'%</b> da prospecção ativa, <b>'+int(capbdr)+'</b> reuniões por BDR':'')+' · folga de <b>'+dec(marg*100)+'%</b>.';
+    $("avisoLeads").innerHTML='<div class="aviso al"><b>O ponto mais difícil é fazer chegar '+int(leads)+' contatos por mês.</b> Isso é trabalho de marketing: a empresa precisa de uma estrutura constante de geração de contatos (conteúdo, anúncios, indicações e parcerias) para o time focar em converter. A R&amp;CON não executa o marketing, mas monta essa estrutura pelo <b>Hub de Negócios</b>: desenha a arquitetura, faz a cotação neutra com parceiros especializados e gerencia a implementação (orçado à parte).'+(usaBdr?' A prospecção ativa (BDR) entra como complemento: depender só de pessoas prospectando raramente entrega volume constante.':'')+'</div>';
     var b=BANDAS[cl], porVend=vendas/vend, av="";
     if(porVend>b.max){
       av='<div class="aviso al">Cada vendedor precisaria fechar <b>'+dec(porVend)+' vendas por mês</b>, acima da média de mercado para '+b.nome+' ('+b.min+' a '+b.max+'). Vale reduzir as oportunidades por vendedor ou somar gente ao time.</div>';
@@ -601,11 +610,11 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 
   function aplicar(d){
     CAMPOS.forEach(function(k){if(d[k]!=null)$(k).value=d[k]});
-    st.ciclo=d.ciclo||"medio"; st.margem=d.margem!=null?+d.margem:10; st.crm=d.crm||"sim"; st.coord=d.coord||"nao"; st.sdrIa=d.sdrIa||"sim"; st.temBdr=!!d.temBdr; st.bdrIa=d.bdrIa||"nao"; marcar("bdrIa","data-b",st.bdrIa);
+    st.ciclo=d.ciclo||"medio"; st.margem=d.margem!=null?+d.margem:15; st.crm=d.crm||"sim"; st.coord=d.coord||"nao"; st.sdrIa=d.sdrIa||"sim"; st.temBdr=!!d.temBdr; st.bdrIa=d.bdrIa||"nao"; marcar("bdrIa","data-b",st.bdrIa);
     marcar("ciclo","data-c",st.ciclo); marcar("margem","data-m",st.margem); marcar("crm","data-c",st.crm); marcar("coord","data-g",st.coord); marcar("sdrIa","data-s",st.sdrIa); $("temBdr").checked=st.temBdr;
   }
   $("bLimpar").addEventListener("click",function(){aplicar(PADRAO);setOculto(false);calc();toast("Valores de exemplo restaurados")});
-  var CHAVE="rcon-diagnostico-v1";
+  var CHAVE="rcon-diagnostico-v2";
   function salvar(){try{var d={coord:st.coord,plano:st.plano,bdrIa:st.bdrIa,aCop:st.aCop,aSdr:st.aSdr,aBdr:st.aBdr,ciclo:st.ciclo,margem:st.margem,crm:st.crm,sdrIa:st.sdrIa,temBdr:st.temBdr,oculto:st.oculto};CAMPOS.forEach(function(k){d[k]=$(k).value});localStorage.setItem(CHAVE,JSON.stringify(d));}catch(e){}}
   function carregar(){try{var d=JSON.parse(localStorage.getItem(CHAVE)||"null");if(d){aplicar(d);if(d.oculto)setOculto(true);}}catch(e){}}
 
@@ -615,7 +624,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
       "Meta: "+brl(R.meta)+" por mês · ticket médio "+brl(R.ticket)+" ("+BANDAS[R.cl].nome+")\n"+
       "Vendas necessárias: "+int(R.vendas)+" por mês\n"+
       "Oportunidades necessárias: "+int(R.oport)+" (fechamento de "+dec(R.fech*100)+"%)"+(R.usaBdr?", sendo "+int(R.oportAtiva)+" da prospecção ativa":"")+"\n"+
-      "Contatos que precisam chegar: "+int(R.leads)+"\n\n"+
+      "Contatos que precisam chegar: "+int(R.leads)+" por mês (o maior desafio: geração de contatos pelo marketing, estruturada com parceiros pelo Hub de Negócios da R&CON)\n\n"+
       "Time necessário x hoje\n"+
       "  Vendedores: "+int(R.vend)+" (hoje "+int(R.atuais)+")\n";
     if(!R.simples) t+= R.sdrIa ? "  SDRs: qualificação feita pelo SDR IA\n" : "  SDRs: "+int(R.sdrNec)+" (hoje "+int(R.sdrAt)+")\n";
