@@ -544,18 +544,18 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     var gb=[], doisCam=[];
     function bloco(ic,cls,txt){gb.push('<div class="req"><div class="ic '+cls+'">'+ic+'</div><div>'+txt+'</div></div>')}
     function hoje(n,nome,extra){return n>0?' Quem já está ('+int(n)+' '+nome+') continua'+extra+'.':''}
-    if(fV>0){bloco("+","a","<b>Vendedores:</b> precisa de "+int(vend)+", tem "+int(atuais)+". Faltam <b>"+int(fV)+"</b>, a contratar nos dois caminhos (a R&amp;CON pode estruturar essas contratações)."+hoje(atuais,"vendedor"+(atuais>1?"es":"")," e entram no acompanhamento semanal")); doisCam.push(int(fV)+" vendedor(es)");}
+    if(fV>0){bloco("+","a","<b>Vendedores:</b> precisa de "+int(vend)+", tem "+int(atuais)+". Faltam <b>"+int(fV)+"</b>, a contratar nos dois caminhos (a R&amp;CON pode estruturar essas contratações)."+hoje(atuais,"vendedor"+(atuais>1?"es":"")," e entra no acompanhamento semanal")); doisCam.push(int(fV)+" vendedor(es)");}
     else bloco("✓","s","<b>Vendedores:</b> os "+int(atuais)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal para render mais.");
     if(temCoord) bloco("✓","s","<b>Coordenação comercial:</b> já existe e continua. A R&amp;CON potencializa com inteligência comercial, dados e acompanhamento do time.");
     else bloco("R&amp;C","r","<b>Coordenação comercial:</b> não existe hoje. Contratando, seria 1 coordenador. Com a R&amp;CON, a inteligência comercial e o acompanhamento semanal cumprem essa função.");
     if(simples) bloco("R&amp;C","r","<b>Qualificação:</b> venda simples. O SDR IA atende e qualifica os contatos, sem montar um time de SDRs.");
     else if(sdrIa){ if(fS>0) bloco("R&amp;C","r","<b>SDRs:</b> precisa de "+int(sdrNec)+", tem "+int(sdrAt)+". Os <b>"+int(fS)+"</b> que faltam são cobertos pelo SDR IA, sem contratar."+hoje(sdrAt,"SDR"+(sdrAt>1?"s":""),", com o SDR IA tirando o volume repetitivo"));
       else bloco("✓","s","<b>SDRs:</b> os "+int(sdrAt)+" de hoje comportam a meta e continuam, com o SDR IA como apoio."); }
-    else { if(fS>0){bloco("+","a","<b>SDRs:</b> precisa de "+int(sdrNec)+", tem "+int(sdrAt)+". Faltam <b>"+int(fS)+"</b>, a contratar nos dois caminhos (atendimento 100% humano)."+hoje(sdrAt,"SDR"+(sdrAt>1?"s":"")," e entram no acompanhamento semanal")); doisCam.push(int(fS)+" SDR(s)");}
+    else { if(fS>0){bloco("+","a","<b>SDRs:</b> precisa de "+int(sdrNec)+", tem "+int(sdrAt)+". Faltam <b>"+int(fS)+"</b>, a contratar nos dois caminhos (atendimento 100% humano)."+hoje(sdrAt,"SDR"+(sdrAt>1?"s":"")," e entra no acompanhamento semanal")); doisCam.push(int(fS)+" SDR(s)");}
       else bloco("✓","s","<b>SDRs:</b> os "+int(sdrAt)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal."); }
     if(usaBdr){ if(bdrIa){ if(fB>0) bloco("R&amp;C","r","<b>BDRs:</b> precisa de "+int(bdrNec)+", tem "+int(bdrAt)+". Os <b>"+int(fB)+"</b> que faltam são cobertos pelo BDR IA, sem contratar."+hoje(bdrAt,"BDR"+(bdrAt>1?"s":""),", com o BDR IA ampliando a prospecção"));
         else bloco("✓","s","<b>BDRs:</b> os "+int(bdrAt)+" de hoje comportam a meta e continuam, com o BDR IA como apoio."); }
-      else { if(fB>0){bloco("+","a","<b>BDRs:</b> precisa de "+int(bdrNec)+", tem "+int(bdrAt)+". Faltam <b>"+int(fB)+"</b>, a contratar nos dois caminhos (prospecção 100% humana)."+hoje(bdrAt,"BDR"+(bdrAt>1?"s":"")," e entram no acompanhamento semanal")); doisCam.push(int(fB)+" BDR(s)");}
+      else { if(fB>0){bloco("+","a","<b>BDRs:</b> precisa de "+int(bdrNec)+", tem "+int(bdrAt)+". Faltam <b>"+int(fB)+"</b>, a contratar nos dois caminhos (prospecção 100% humana)."+hoje(bdrAt,"BDR"+(bdrAt>1?"s":"")," e entra no acompanhamento semanal")); doisCam.push(int(fB)+" BDR(s)");}
         else bloco("✓","s","<b>BDRs:</b> os "+int(bdrAt)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal."); } }
     $("gapTime").innerHTML=gb.join("");
     var so=[];
