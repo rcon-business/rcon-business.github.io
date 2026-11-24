@@ -108,6 +108,12 @@ table.comp td.c{font-family:Poppins,Arial,sans-serif;font-weight:600;color:var(-
 table.comp td.neg{color:var(--verm)} table.comp td.pos{color:var(--ok)} table.comp td.ia{color:var(--ok);font-size:12.5px}
 .margem-int{margin-top:12px;border:1px dashed var(--suave);border-radius:10px;padding:10px 12px;background:#FAFAFB}
 .margem-int summary{cursor:pointer;font-family:Poppins,Arial,sans-serif;font-weight:600;color:var(--azul);font-size:14px}
+.estat{margin:12px 0 0;padding:8px 10px;border-radius:8px;background:#F7F7F8;border:1px dashed var(--linha);font-size:12px;color:var(--suave)}
+.gap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:6px}
+.gap .num{font-size:clamp(16px,4.6vw,22px);overflow-wrap:anywhere}
+.gap .kpi{padding:10px 8px}
+.h3{font-family:Poppins,Arial,sans-serif;font-weight:600;color:var(--azul);font-size:15px;margin:16px 0 4px}
+.premissas{margin-top:10px}.premissas summary{cursor:pointer;font-family:Poppins,Arial,sans-serif;font-weight:600;color:var(--azul);font-size:14px}
 .cta .grande{display:block;width:100%;padding:12px;font-size:15px;margin-top:8px}
 .cta{border-color:var(--verm);border-width:2px}
 .cta .leve{border-color:var(--linha);color:var(--suave)}
@@ -243,6 +249,13 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
       <p class="sub">Serve para comparar com o time necessário.</p>
       <div class="campo">
         <div>
+          <label for="fatAtual">Faturamento atual por mês</label>
+          <div class="entrada"><span>R$</span><input id="fatAtual" inputmode="decimal" value="200.000"></div>
+        </div>
+        <div class="dica">Média dos últimos 3 meses. Serve para mostrar quanto fica na mesa até a meta.</div>
+      </div>
+      <div class="campo">
+        <div>
           <label for="atuais">Vendedores que a empresa tem hoje</label>
           <div class="entrada"><input id="atuais" inputmode="numeric" value="1"><span>vendedores</span></div>
         </div>
@@ -312,6 +325,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
       </div>
       <div id="avisoTime"></div>
       <div class="formula" id="formula"></div>
+      <p class="estat">Estimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.</p>
     </div>
 
     <div class="card">
@@ -324,13 +338,53 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     </div>
 
     <div class="card">
-      <h2><span class="n">5</span>Requisitos</h2>
+      <h2><span class="n">5</span>O que fica na mesa e o custo de montar sozinho</h2>
+      <p class="sub">Quanto sua empresa deixa de faturar hoje e quanto custaria montar a gestão e a pré-venda contratando por conta própria.</p>
+      <div class="gap">
+        <div class="kpi"><div class="r">Faturamento hoje</div><div class="num" id="gAtual">–</div></div>
+        <div class="kpi"><div class="r">Meta</div><div class="num" id="gMeta">–</div></div>
+        <div class="kpi dest"><div class="r">Deixa de gerar por mês</div><div class="num" id="gMes">–</div></div>
+        <div class="kpi dest"><div class="r">Em 12 meses</div><div class="num" id="gAno">–</div></div>
+      </div>
+      <div id="gTexto"></div>
+      <h3 class="h3">Montando sozinho, com contratação CLT</h3>
+      <table><tbody id="soLinhas"></tbody>
+        <tr class="total"><td><b>Custo por mês</b><br><span class="peq">custo total CLT</span></td><td class="v" id="soMes"></td></tr>
+        <tr><td>Contratação (uma vez)<br><span class="peq" id="soRecTxt"></span></td><td class="v" id="soRec"></td></tr>
+        <tr><td>Primeiro ano<br><span class="peq">12 meses de salários + contratação</span></td><td class="v" id="soAno"></td></tr>
+      </table>
+      <details class="premissas">
+        <summary>Ajustar premissas</summary>
+        <p class="peq">Custo total de um CLT (salário, encargos, férias, 13º e benefícios) ≈ 1,66 × salário. Ex.: salário de R$ 3 mil custa R$ 4.980,83 por mês; de R$ 4 mil, R$ 6.641,11.</p>
+        <div class="campo" style="border-top:0">
+          <div><label for="salGestor">Salário do coordenador comercial</label><div class="entrada"><span>R$</span><input id="salGestor" inputmode="decimal" value="7.000"></div></div>
+          <div class="dica">Mediana nacional R$ 4,7 mil a R$ 4,9 mil. Com experiência e em cidade grande, <b>acima de R$ 7 mil</b>.</div>
+        </div>
+        <div class="campo">
+          <div><label for="salSdr">Salário do SDR</label><div class="entrada"><span>R$</span><input id="salSdr" inputmode="decimal" value="3.000"></div></div>
+          <div class="dica">Média de mercado: <b>cerca de R$ 3 mil</b>.</div>
+        </div>
+        <div class="campo">
+          <div><label for="salBdr">Salário do BDR</label><div class="entrada"><span>R$</span><input id="salBdr" inputmode="decimal" value="4.000"></div></div>
+          <div class="dica">Média de mercado: <b>cerca de R$ 4 mil</b>.</div>
+        </div>
+        <div class="campo">
+          <div><label for="recrut">Custo de contratação</label><div class="entrada"><input id="recrut" inputmode="decimal" value="1"><span>salário(s) por pessoa</span></div></div>
+          <div class="dica">Anúncios, seleção, treinamento e o tempo até a pessoa render. Referência usada: <b>1 salário por contratação</b>.</div>
+        </div>
+      </details>
+      <p class="peq" style="margin-top:8px">Os vendedores, o CRM e as ferramentas entram nas duas opções, por isso ficam fora desta conta.</p>
+      <p class="estat">Estimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">6</span>Requisitos</h2>
       <div id="reqs"></div>
     </div>
 
     <div class="card cta">
-      <h2><span class="n">6</span>Quer montar esse time?</h2>
-      <p class="sub">Envie este diagnóstico para o time da R&amp;CON. Na conversa, montamos um projeto personalizado para a sua empresa chegar nessa meta.</p>
+      <h2><span class="n">7</span>Quer montar esse time?</h2>
+      <p class="sub">Envie este diagnóstico para o time da R&amp;CON. Na conversa, mostramos quanto custa essa mesma estrutura com a R&amp;CON e montamos um projeto personalizado para a sua empresa chegar nessa meta.</p>
       <button class="btn cheio grande" id="bAgendar" type="button">Agendar uma conversa com este diagnóstico</button>
       <button class="btn grande" id="bEnviar" type="button">Enviar pelo WhatsApp</button>
       <button class="btn grande leve" id="bCopiar" type="button">Copiar diagnóstico</button>
@@ -338,7 +392,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     </div>
   </section>
 </main>
-<footer>R&amp;CON Business · Hub de Desenvolvimento de Negócios · Diagnóstico gratuito, sem compromisso.</footer>
+<footer>R&amp;CON Business · Hub de Desenvolvimento de Negócios · Diagnóstico gratuito, sem compromisso.<br>Estimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -350,8 +404,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     medio:{nome:"venda de porte médio", min:10, max:15},
     alto:{nome:"venda grande (ticket alto, ciclo longo)", min:1, max:3}
   };
-  var CAMPOS=["meta","ticket","fech","cap","conv","capsdr","pAtiva","capbdr","atuais","sdrAtuais","bdrAtuais"];
-  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"300",pAtiva:"30",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",aliq:"6",hEsp:"160",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
+  var CAMPOS=["meta","ticket","fech","cap","conv","capsdr","pAtiva","capbdr","atuais","sdrAtuais","bdrAtuais","fatAtual","salGestor","salSdr","salBdr","recrut"];
+  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"300",pAtiva:"30",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",fatAtual:"200.000",salGestor:"7.000",salSdr:"3.000",salBdr:"4.000",recrut:"1",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
   var st={plano:"motor",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",aCop:true,aSdr:false,aBdr:false,temBdr:false,oculto:true};
   var $=function(id){return document.getElementById(id)};
   var R={};
@@ -363,6 +417,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     else if(/^\d{1,3}(\.\d{3})+$/.test(v)){ v=v.replace(/\./g,""); }
     return parseFloat(v);
   }
+  function brl0(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0})}
   function brl(v){return v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
   function int(v){return Math.round(v).toLocaleString("pt-BR")}
   function dec(v,c){return v.toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:c==null?1:c})}
@@ -458,6 +513,28 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     var falta=Math.max(0,vend-atuais)+(!simples&&!sdrIa?Math.max(0,sdrNec-sdrAt):0)+(usaBdr&&!bdrIa?Math.max(0,bdrNec-bdrAt):0);
     $("avisoComp").innerHTML = falta>0 ? '<div class="aviso al">Para bater a meta, o time precisa de mais <b>'+int(falta)+'</b> pessoa(s). A R&amp;CON pode estruturar essas contratações.</div>' : '<div class="aviso ok">O time de hoje já comporta a meta.</div>';
 
+    // o que fica na mesa e o custo de montar sozinho
+    var fatAt=num($("fatAtual").value)||0, gapMes=Math.max(0,meta-fatAt);
+    $("gAtual").textContent=fatAt>0?brl0(fatAt):"–"; $("gMeta").textContent=brl0(meta);
+    $("gMes").textContent=brl0(gapMes); $("gAno").textContent=brl0(gapMes*12);
+    var vendHoje=fatAt>0?fatAt/ticket:0;
+    $("gTexto").innerHTML = fatAt<=0 ? '<div class="aviso inf">Informe seu faturamento atual no item 2 para ver quanto fica na mesa.</div>'
+      : (gapMes>0 ? '<div class="aviso al">Hoje a empresa fecha cerca de <b>'+dec(vendHoje,0)+' vendas por mês</b>'+(atuais>0?' ('+dec(vendHoje/atuais,1)+' por vendedor)':'')+'. Para a meta, são <b>'+int(vendas)+'</b>. A diferença representa cerca de <b>'+brl(gapMes)+' por mês</b> que a empresa deixa de faturar.</div>'
+      : '<div class="aviso ok">A empresa já fatura a meta informada. Vale testar uma meta maior.</div>');
+    var FATOR=4980.83/3000, rec=num($("recrut").value)||0;
+    var sG=num($("salGestor").value)||0, sS=num($("salSdr").value)||0, sB=num($("salBdr").value)||0;
+    var nSdrSo = simples ? 0 : sdrNec, nBdrSo = usaBdr ? bdrNec : 0;
+    var cT=function(s){return Math.round(s*FATOR*100)/100};
+    var so=[["Coordenador comercial","1 × "+brl(cT(sG))+" (salário de "+brl(sG)+")",cT(sG),1,sG]];
+    if(nSdrSo>0) so.push(["SDRs para qualificar os contatos",int(nSdrSo)+" × "+brl(cT(sS))+" (salário de "+brl(sS)+")",nSdrSo*cT(sS),nSdrSo,sS]);
+    if(nBdrSo>0) so.push(["BDRs para a prospecção ativa",int(nBdrSo)+" × "+brl(cT(sB))+" (salário de "+brl(sB)+")",nBdrSo*cT(sB),nBdrSo,sB]);
+    var soMes=so.reduce(function(s,i){return s+i[2]},0), soRec=so.reduce(function(s,i){return s+i[3]*i[4]*rec},0), soPessoas=so.reduce(function(s,i){return s+i[3]},0);
+    $("soLinhas").innerHTML=so.map(function(i){return '<tr><td>'+i[0]+'<br><span class="peq">'+i[1]+'</span></td><td class="v">'+brl(i[2])+'</td></tr>'}).join("");
+    $("soMes").textContent=brl(soMes); $("soRec").textContent=brl(soRec);
+    $("soRecTxt").textContent=int(soPessoas)+" contratação(ões) × "+dec(rec,1)+" salário";
+    $("soAno").textContent=brl(soMes*12+soRec);
+    R.fatAt=fatAt;R.gapMes=gapMes;R.soMes=soMes;R.soRec=soRec;R.soAno=soMes*12+soRec;R.soPessoas=soPessoas;
+
     // requisitos
     var rq="";
     if(atuais>=PRECO.minVend){
@@ -482,7 +559,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
   $("temBdr").addEventListener("change",function(){st.temBdr=this.checked;calc();});
   document.addEventListener("click",function(e){var b=e.target.closest(".usar");if(!b)return;$(b.dataset.set).value=b.dataset.v;calc();});
   CAMPOS.forEach(function(id){$(id).addEventListener("input",calc);$(id).addEventListener("change",calc);});
-  ["meta","ticket"].forEach(function(id){$(id).addEventListener("blur",function(){var v=num(this.value);if(v>0)this.value=v.toLocaleString("pt-BR",{maximumFractionDigits:2});});});
+  ["meta","ticket","fatAtual","salGestor","salSdr","salBdr"].forEach(function(id){$(id).addEventListener("blur",function(){var v=num(this.value);if(v>0)this.value=v.toLocaleString("pt-BR",{maximumFractionDigits:2});});});
 
   function setOculto(){}
 
@@ -509,6 +586,9 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     else t+="  Qualificação: SDR IA\n";
     if(R.usaBdr) t+= R.bdrIa ? "  BDRs: prospecção feita pelo BDR IA\n" : "  BDRs: "+int(R.bdrNec)+" (hoje "+int(R.bdrAt)+")\n";
     t+="CRM: "+(st.crm==="sim"?"já usa":"precisa implantar")+"\n";
+    if(R.fatAt>0) t+="\nFaturamento hoje: "+brl(R.fatAt)+" por mês · deixa de gerar cerca de "+brl(R.gapMes)+" por mês ("+brl(R.gapMes*12)+" em 12 meses)\n";
+    t+="Montar a gestão e a pré-venda sozinho (CLT): cerca de "+brl(R.soMes)+" por mês + "+brl(R.soRec)+" de contratação\n";
+    t+="\nEstimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.\n";
     return t;
   }
   $("bCopiar").addEventListener("click",function(){
