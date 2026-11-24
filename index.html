@@ -619,7 +619,7 @@ footer{padding-block:48px 56px;border-top:1px solid var(--line);color:var(--mute
       </ul>
       <div class="phases"><span><b>mês 1</b>raio-X</span><span><b>meses 2 e 3</b>estrutura e CRM</span><span><b>mês 4 em diante</b>acompanhamento</span></div>
       <p class="obj"><b>Já comprei um robô de IA e não vendi mais.</b> A IA acelera o processo que existe. Se o processo é ruim, ela acelera o problema. Por isso a estrutura vem antes.</p>
-      <div class="prod-acts"><a class="btn btn-main" href="#conversa" data-interest="vendas">Falar sobre o Motor Comercial <span class="arr">→</span></a></div>
+      <div class="prod-acts"><a class="btn btn-main" href="#conversa" data-interest="vendas">Falar sobre o Motor Comercial <span class="arr">→</span></a><a class="btn btn-alt" href="diagnostico.html">Fazer o diagnóstico do time <span class="arr">→</span></a></div>
     </div>
     <div class="ui" aria-label="Exemplo de funil de vendas no CRM">
       <div class="ui-bar"><span class="dots"><i></i><i></i><i></i></span><span>Pipeline · semana 44</span><span class="chip">exemplo</span></div>
@@ -1225,6 +1225,10 @@ function trackAula50(){if(!aulaTracked){aulaTracked=true;track('ViewContent',{co
   if(!URL_AGENTE&&!temClaude){semChat()}
   else{
     render();
+    /* diagnóstico do time comercial (diagnostico.html): chega pronto e vira a primeira mensagem */
+    try{const diag=sessionStorage.getItem('rcon_diag');
+      if(diag&&URL_AGENTE){sessionStorage.removeItem('rcon_diag');st.interesse='Motor Comercial';save();
+        setTimeout(()=>{const s=document.getElementById('conversa');if(s)s.scrollIntoView({block:'start'});enviar(diag.slice(0,1500))},400)}}catch(e){}
     if(!URL_AGENTE){
       modo='indisponivel';
       window.claude.use('sample').then(s=>{
