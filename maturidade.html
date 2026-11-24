@@ -248,7 +248,7 @@ main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
       <p class="disc"><b>Importante:</b> estes números vêm de modelos estatísticos, feitos com médias de mercado e estudos com milhares de empresas. São referências para dar ordem de grandeza, e <b>não são garantia de lucro nem de resultados futuros exatos</b>. O resultado de cada empresa depende do mercado, da execução e de fatores fora do nosso controle.</p>
       <details class="fontes"><summary>Como calculamos</summary>
         <p><b>Deixando de gerar:</b> um estudo de Bloom, Sadun e Van Reenen com cerca de 11 mil empresas em 34 países mostrou que as empresas do quarto mais bem gerido são, em média, 15% mais produtivas que as do quarto pior gerido. Aplicamos esses 15% de forma proporcional à distância entre o seu nível de hoje e o nível alcançável (a escala inteira, do nível 1 ao 4, vale os 15%) e usamos o meio da sua faixa de faturamento. Mostramos uma faixa entre metade e o valor cheio dessa conta. É uma relação observada em média, não uma promessa de causa e efeito para a sua empresa.</p>
-        <p><b>Fazer por conta própria:</b> um coordenador para cada área que precisa subir de nível. Usamos a faixa salarial nacional de coordenador(a) de finanças da Robert Half (R$ 13.150 a R$ 19.850 por mês) como referência para todas as áreas, mais cerca de 70% de encargos e benefícios de um contrato CLT. Não inclui o tempo e o custo de recrutar, treinar e o risco de errar na contratação.</p>
+        <p><b>Fazer por conta própria:</b> um coordenador para cada área que precisa subir de nível. Usamos a faixa salarial nacional de coordenador(a) de finanças da Robert Half (R$ 13.150 a R$ 19.850 por mês) como referência para todas as áreas, mais cerca de 66% de encargos e benefícios de um contrato CLT (a mesma conta que leva um salário de R$ 3 mil a um custo total de cerca de R$ 4.980). Não inclui o tempo e o custo de recrutar, treinar e o risco de errar na contratação.</p>
       </details>
     </div>
 
@@ -478,7 +478,7 @@ main{max-width:760px;margin:0 auto;padding:16px 16px 48px}
     var base=MEIO[st.fat];
     if(base){var pct=0.15*Math.max(0,c.ga-c.g)/3;o.perdeMax=base*pct;o.perdeMin=o.perdeMax/2;o.pct=pct;}
     var frentes=0;[["fin"],["com"],["atend"],["op","dados"]].forEach(function(g){if(g.some(function(id){return R[id].alvo>R[id].n}))frentes++});
-    o.frentes=frentes;o.custoMin=frentes*13150*1.7;o.custoMax=frentes*19850*1.7;
+    o.frentes=frentes;o.custoMin=frentes*13150*1.66;o.custoMax=frentes*19850*1.66;
     return o;
   }
   function pintarValor(c){
