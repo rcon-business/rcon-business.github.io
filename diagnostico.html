@@ -78,7 +78,7 @@ tr.total td.v{font-size:24px;color:var(--verm)}
 .req{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--cinza)}
 .req:first-of-type{border-top:0}
 .req .ic{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-family:Poppins,Arial,sans-serif}
-.ic.s{background:var(--ok)} .ic.n{background:var(--alerta)}
+.ic.s{background:var(--ok)} .ic.n{background:var(--alerta)} .ic.r{background:#0D2340;font-size:11px} .ic.a{background:#B91C1C}
 .oculto .preco-area{display:none}
 .oculto .preco-fechado{display:block}
 .preco-fechado{display:none}
@@ -252,7 +252,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
           <label for="fatAtual">Faturamento atual por mês</label>
           <div class="entrada"><span>R$</span><input id="fatAtual" inputmode="decimal" value="200.000"></div>
         </div>
-        <div class="dica">Média dos últimos 3 meses. Serve para mostrar quanto fica na mesa até a meta.</div>
+        <div class="dica">Média dos últimos 3 meses. Serve para mostrar quanto falta até a meta.</div>
       </div>
       <div class="campo">
         <div>
@@ -260,6 +260,16 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
           <div class="entrada"><input id="atuais" inputmode="numeric" value="1"><span>vendedores</span></div>
         </div>
         <div class="dica">Conte só quem vende de fato (inclusive o dono, se ele é quem fecha).</div>
+      </div>
+      <div class="campo">
+        <div>
+          <label>Tem coordenador ou gestor comercial hoje?</label>
+          <div class="seg" id="coord">
+            <button type="button" data-g="sim">Sim</button>
+            <button type="button" data-g="nao" class="ativo">Não</button>
+          </div>
+        </div>
+        <div class="dica">Alguém que cuida da gestão do time comercial. O dono que também vende não conta.</div>
       </div>
       <div class="so-equipe">
         <div class="campo">
@@ -338,21 +348,26 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     </div>
 
     <div class="card">
-      <h2><span class="n">5</span>O que fica na mesa e o custo de montar sozinho</h2>
-      <p class="sub">Quanto sua empresa deixa de faturar hoje e quanto custaria montar a gestão e a pré-venda contratando por conta própria.</p>
+      <h2><span class="n">5</span>Da estrutura de hoje até a meta</h2>
+      <p class="sub">Quem já está na empresa continua. A conta mostra só o que falta para sua empresa chegar à meta e as duas formas de completar: contratando mais gente ou com a R&amp;CON.</p>
       <div class="gap">
-        <div class="kpi"><div class="r">Faturamento hoje</div><div class="num" id="gAtual">–</div></div>
+        <div class="kpi"><div class="r">Gera hoje por mês</div><div class="num" id="gAtual">–</div></div>
         <div class="kpi"><div class="r">Meta</div><div class="num" id="gMeta">–</div></div>
-        <div class="kpi dest"><div class="r">Deixa de gerar por mês</div><div class="num" id="gMes">–</div></div>
+        <div class="kpi dest"><div class="r">Falta por mês</div><div class="num" id="gMes">–</div></div>
         <div class="kpi dest"><div class="r">Em 12 meses</div><div class="num" id="gAno">–</div></div>
       </div>
       <div id="gTexto"></div>
-      <h3 class="h3">Montando sozinho, com contratação CLT</h3>
-      <table><tbody id="soLinhas"></tbody>
+      <h3 class="h3">O que falta no time e como completar</h3>
+      <div id="gapTime"></div>
+      <h3 class="h3">Completar contratando (CLT)</h3>
+      <p class="peq">Só as funções que a R&amp;CON também pode cobrir. Quem já está na empresa não entra na conta.</p>
+      <div id="soVazio"></div>
+      <table id="soTab"><tbody id="soLinhas"></tbody>
         <tr class="total"><td><b>Custo por mês</b><br><span class="peq">custo total CLT</span></td><td class="v" id="soMes"></td></tr>
         <tr><td>Contratação (uma vez)<br><span class="peq" id="soRecTxt"></span></td><td class="v" id="soRec"></td></tr>
         <tr><td>Primeiro ano<br><span class="peq">12 meses de salários + contratação</span></td><td class="v" id="soAno"></td></tr>
       </table>
+      <div class="aviso inf" id="rconTxt">Completar com a R&amp;CON: especialistas cuidam da gestão e da inteligência comercial, agentes de IA cobrem a qualificação e a prospecção que faltam, e quem já está no time ganha acompanhamento semanal. O valor é apresentado na conversa, de acordo com o seu cenário. Ninguém é substituído: a R&amp;CON complementa e potencializa o time atual.</div>
       <details class="premissas">
         <summary>Ajustar premissas</summary>
         <p class="peq">Custo total de um CLT (salário, encargos, férias, 13º e benefícios) ≈ 1,66 × salário. Ex.: salário de R$ 3 mil custa R$ 4.980,83 por mês; de R$ 4 mil, R$ 6.641,11.</p>
@@ -373,7 +388,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
           <div class="dica">Anúncios, seleção, treinamento e o tempo até a pessoa render. Referência usada: <b>1 salário por contratação</b>.</div>
         </div>
       </details>
-      <p class="peq" style="margin-top:8px">Os vendedores, o CRM e as ferramentas entram nas duas opções, por isso ficam fora desta conta.</p>
+      <p class="peq" style="margin-top:8px">Vendedores que faltam (e SDRs ou BDRs humanos, quando não se usa o agente de IA) precisam ser contratados nos dois caminhos, assim como CRM e ferramentas. Por isso ficam fora desta comparação.</p>
       <p class="estat">Estimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.</p>
     </div>
 
@@ -384,7 +399,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 
     <div class="card cta">
       <h2><span class="n">7</span>Quer montar esse time?</h2>
-      <p class="sub">Envie este diagnóstico para o time da R&amp;CON. Na conversa, mostramos quanto custa essa mesma estrutura com a R&amp;CON e montamos um projeto personalizado para a sua empresa chegar nessa meta.</p>
+      <p class="sub">Envie este diagnóstico para o time da R&amp;CON. Na conversa, mostramos quanto custa completar esse time com a R&amp;CON e montamos um projeto personalizado para a sua empresa chegar nessa meta.</p>
       <button class="btn cheio grande" id="bAgendar" type="button">Agendar uma conversa com este diagnóstico</button>
       <button class="btn grande" id="bEnviar" type="button">Enviar pelo WhatsApp</button>
       <button class="btn grande leve" id="bCopiar" type="button">Copiar diagnóstico</button>
@@ -405,8 +420,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     alto:{nome:"venda grande (ticket alto, ciclo longo)", min:1, max:3}
   };
   var CAMPOS=["meta","ticket","fech","cap","conv","capsdr","pAtiva","capbdr","atuais","sdrAtuais","bdrAtuais","fatAtual","salGestor","salSdr","salBdr","recrut"];
-  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"300",pAtiva:"30",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",fatAtual:"200.000",salGestor:"7.000",salSdr:"3.000",salBdr:"4.000",recrut:"1",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
-  var st={plano:"motor",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",aCop:true,aSdr:false,aBdr:false,temBdr:false,oculto:true};
+  var PADRAO={meta:"300.000",ticket:"8.000",fech:"10",cap:"60",conv:"25",capsdr:"300",pAtiva:"30",capbdr:"12",atuais:"1",sdrAtuais:"0",bdrAtuais:"0",fatAtual:"200.000",salGestor:"7.000",salSdr:"3.000",salBdr:"4.000",recrut:"1",ciclo:"medio",margem:10,coord:"nao",crm:"sim",sdrIa:"sim",bdrIa:"nao",temBdr:false,aCop:true,aSdr:false,aBdr:false};
+  var st={coord:"nao",plano:"motor",ciclo:"medio",margem:10,crm:"sim",sdrIa:"sim",bdrIa:"nao",aCop:true,aSdr:false,aBdr:false,temBdr:false,oculto:true};
   var $=function(id){return document.getElementById(id)};
   var R={};
 
@@ -518,22 +533,43 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     $("gAtual").textContent=fatAt>0?brl0(fatAt):"–"; $("gMeta").textContent=brl0(meta);
     $("gMes").textContent=brl0(gapMes); $("gAno").textContent=brl0(gapMes*12);
     var vendHoje=fatAt>0?fatAt/ticket:0;
-    $("gTexto").innerHTML = fatAt<=0 ? '<div class="aviso inf">Informe seu faturamento atual no item 2 para ver quanto fica na mesa.</div>'
-      : (gapMes>0 ? '<div class="aviso al">Hoje a empresa fecha cerca de <b>'+dec(vendHoje,0)+' vendas por mês</b>'+(atuais>0?' ('+dec(vendHoje/atuais,1)+' por vendedor)':'')+'. Para a meta, são <b>'+int(vendas)+'</b>. A diferença representa cerca de <b>'+brl(gapMes)+' por mês</b> que a empresa deixa de faturar.</div>'
+    $("gTexto").innerHTML = fatAt<=0 ? '<div class="aviso inf">Informe seu faturamento atual no item 2 para ver quanto falta até a meta.</div>'
+      : (gapMes>0 ? '<div class="aviso al">Hoje a empresa fecha cerca de <b>'+dec(vendHoje,0)+' vendas por mês</b>'+(atuais>0?' ('+dec(vendHoje/atuais,1)+' por vendedor)':'')+'. Para a meta, são <b>'+int(vendas)+'</b>. A diferença é de cerca de <b>'+brl(gapMes)+' por mês</b> que a estrutura de hoje ainda não alcança.</div>'
       : '<div class="aviso ok">A empresa já fatura a meta informada. Vale testar uma meta maior.</div>');
     var FATOR=4980.83/3000, rec=num($("recrut").value)||0;
     var sG=num($("salGestor").value)||0, sS=num($("salSdr").value)||0, sB=num($("salBdr").value)||0;
-    var nSdrSo = simples ? 0 : sdrNec, nBdrSo = usaBdr ? bdrNec : 0;
+    var temCoord=st.coord==="sim";
+    var fV=Math.max(0,vend-atuais), fS=simples?0:Math.max(0,sdrNec-sdrAt), fB=usaBdr?Math.max(0,bdrNec-bdrAt):0;
     var cT=function(s){return Math.round(s*FATOR*100)/100};
-    var so=[["Coordenador comercial","1 × "+brl(cT(sG))+" (salário de "+brl(sG)+")",cT(sG),1,sG]];
-    if(nSdrSo>0) so.push(["SDRs para qualificar os contatos",int(nSdrSo)+" × "+brl(cT(sS))+" (salário de "+brl(sS)+")",nSdrSo*cT(sS),nSdrSo,sS]);
-    if(nBdrSo>0) so.push(["BDRs para a prospecção ativa",int(nBdrSo)+" × "+brl(cT(sB))+" (salário de "+brl(sB)+")",nBdrSo*cT(sB),nBdrSo,sB]);
+    var gb=[], doisCam=[];
+    function bloco(ic,cls,txt){gb.push('<div class="req"><div class="ic '+cls+'">'+ic+'</div><div>'+txt+'</div></div>')}
+    function hoje(n,nome,extra){return n>0?' Quem já está ('+int(n)+' '+nome+') continua'+extra+'.':''}
+    if(fV>0){bloco("+","a","<b>Vendedores:</b> precisa de "+int(vend)+", tem "+int(atuais)+". Faltam <b>"+int(fV)+"</b>, a contratar nos dois caminhos (a R&amp;CON pode estruturar essas contratações)."+hoje(atuais,"vendedor"+(atuais>1?"es":"")," e entram no acompanhamento semanal")); doisCam.push(int(fV)+" vendedor(es)");}
+    else bloco("✓","s","<b>Vendedores:</b> os "+int(atuais)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal para render mais.");
+    if(temCoord) bloco("✓","s","<b>Coordenação comercial:</b> já existe e continua. A R&amp;CON potencializa com inteligência comercial, dados e acompanhamento do time.");
+    else bloco("R&amp;C","r","<b>Coordenação comercial:</b> não existe hoje. Contratando, seria 1 coordenador. Com a R&amp;CON, a inteligência comercial e o acompanhamento semanal cumprem essa função.");
+    if(simples) bloco("R&amp;C","r","<b>Qualificação:</b> venda simples. O SDR IA atende e qualifica os contatos, sem montar um time de SDRs.");
+    else if(sdrIa){ if(fS>0) bloco("R&amp;C","r","<b>SDRs:</b> precisa de "+int(sdrNec)+", tem "+int(sdrAt)+". Os <b>"+int(fS)+"</b> que faltam são cobertos pelo SDR IA, sem contratar."+hoje(sdrAt,"SDR"+(sdrAt>1?"s":""),", com o SDR IA tirando o volume repetitivo"));
+      else bloco("✓","s","<b>SDRs:</b> os "+int(sdrAt)+" de hoje comportam a meta e continuam, com o SDR IA como apoio."); }
+    else { if(fS>0){bloco("+","a","<b>SDRs:</b> precisa de "+int(sdrNec)+", tem "+int(sdrAt)+". Faltam <b>"+int(fS)+"</b>, a contratar nos dois caminhos (atendimento 100% humano)."+hoje(sdrAt,"SDR"+(sdrAt>1?"s":"")," e entram no acompanhamento semanal")); doisCam.push(int(fS)+" SDR(s)");}
+      else bloco("✓","s","<b>SDRs:</b> os "+int(sdrAt)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal."); }
+    if(usaBdr){ if(bdrIa){ if(fB>0) bloco("R&amp;C","r","<b>BDRs:</b> precisa de "+int(bdrNec)+", tem "+int(bdrAt)+". Os <b>"+int(fB)+"</b> que faltam são cobertos pelo BDR IA, sem contratar."+hoje(bdrAt,"BDR"+(bdrAt>1?"s":""),", com o BDR IA ampliando a prospecção"));
+        else bloco("✓","s","<b>BDRs:</b> os "+int(bdrAt)+" de hoje comportam a meta e continuam, com o BDR IA como apoio."); }
+      else { if(fB>0){bloco("+","a","<b>BDRs:</b> precisa de "+int(bdrNec)+", tem "+int(bdrAt)+". Faltam <b>"+int(fB)+"</b>, a contratar nos dois caminhos (prospecção 100% humana)."+hoje(bdrAt,"BDR"+(bdrAt>1?"s":"")," e entram no acompanhamento semanal")); doisCam.push(int(fB)+" BDR(s)");}
+        else bloco("✓","s","<b>BDRs:</b> os "+int(bdrAt)+" de hoje comportam a meta. Continuam e entram no acompanhamento semanal."); } }
+    $("gapTime").innerHTML=gb.join("");
+    var so=[];
+    if(!temCoord) so.push(["Coordenador comercial","1 × "+brl(cT(sG))+" (salário de "+brl(sG)+")",cT(sG),1,sG]);
+    if(sdrIa && fS>0) so.push(["SDRs que faltam",int(fS)+" × "+brl(cT(sS))+" (salário de "+brl(sS)+")",fS*cT(sS),fS,sS]);
+    if(bdrIa && fB>0) so.push(["BDRs que faltam",int(fB)+" × "+brl(cT(sB))+" (salário de "+brl(sB)+")",fB*cT(sB),fB,sB]);
     var soMes=so.reduce(function(s,i){return s+i[2]},0), soRec=so.reduce(function(s,i){return s+i[3]*i[4]*rec},0), soPessoas=so.reduce(function(s,i){return s+i[3]},0);
+    $("soTab").style.display=so.length?"":"none";
+    $("soVazio").innerHTML=so.length?"":'<div class="aviso ok">Nada a contratar nas funções que a R&amp;CON cobre: aqui a R&amp;CON entra só para potencializar quem já está na empresa.</div>';
     $("soLinhas").innerHTML=so.map(function(i){return '<tr><td>'+i[0]+'<br><span class="peq">'+i[1]+'</span></td><td class="v">'+brl(i[2])+'</td></tr>'}).join("");
     $("soMes").textContent=brl(soMes); $("soRec").textContent=brl(soRec);
     $("soRecTxt").textContent=int(soPessoas)+" contratação(ões) × "+dec(rec,1)+" salário";
     $("soAno").textContent=brl(soMes*12+soRec);
-    R.fatAt=fatAt;R.gapMes=gapMes;R.soMes=soMes;R.soRec=soRec;R.soAno=soMes*12+soRec;R.soPessoas=soPessoas;
+    R.fatAt=fatAt;R.gapMes=gapMes;R.soMes=soMes;R.soRec=soRec;R.soAno=soMes*12+soRec;R.soPessoas=soPessoas;R.temCoord=temCoord;R.doisCam=doisCam;
 
     // requisitos
     var rq="";
@@ -555,7 +591,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
   function grupo(id,attr,chave,conv){
     $(id).addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;var v=b.getAttribute(attr);st[chave]=conv?conv(v):v;marcar(id,attr,v);calc();});
   }
-  grupo("ciclo","data-c","ciclo"); grupo("margem","data-m","margem",Number); grupo("crm","data-c","crm"); grupo("sdrIa","data-s","sdrIa"); grupo("bdrIa","data-b","bdrIa");
+  grupo("ciclo","data-c","ciclo"); grupo("margem","data-m","margem",Number); grupo("crm","data-c","crm"); grupo("coord","data-g","coord"); grupo("sdrIa","data-s","sdrIa"); grupo("bdrIa","data-b","bdrIa");
   $("temBdr").addEventListener("change",function(){st.temBdr=this.checked;calc();});
   document.addEventListener("click",function(e){var b=e.target.closest(".usar");if(!b)return;$(b.dataset.set).value=b.dataset.v;calc();});
   CAMPOS.forEach(function(id){$(id).addEventListener("input",calc);$(id).addEventListener("change",calc);});
@@ -565,12 +601,12 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 
   function aplicar(d){
     CAMPOS.forEach(function(k){if(d[k]!=null)$(k).value=d[k]});
-    st.ciclo=d.ciclo||"medio"; st.margem=d.margem!=null?+d.margem:10; st.crm=d.crm||"sim"; st.sdrIa=d.sdrIa||"sim"; st.temBdr=!!d.temBdr; st.bdrIa=d.bdrIa||"nao"; marcar("bdrIa","data-b",st.bdrIa);
-    marcar("ciclo","data-c",st.ciclo); marcar("margem","data-m",st.margem); marcar("crm","data-c",st.crm); marcar("sdrIa","data-s",st.sdrIa); $("temBdr").checked=st.temBdr;
+    st.ciclo=d.ciclo||"medio"; st.margem=d.margem!=null?+d.margem:10; st.crm=d.crm||"sim"; st.coord=d.coord||"nao"; st.sdrIa=d.sdrIa||"sim"; st.temBdr=!!d.temBdr; st.bdrIa=d.bdrIa||"nao"; marcar("bdrIa","data-b",st.bdrIa);
+    marcar("ciclo","data-c",st.ciclo); marcar("margem","data-m",st.margem); marcar("crm","data-c",st.crm); marcar("coord","data-g",st.coord); marcar("sdrIa","data-s",st.sdrIa); $("temBdr").checked=st.temBdr;
   }
   $("bLimpar").addEventListener("click",function(){aplicar(PADRAO);setOculto(false);calc();toast("Valores de exemplo restaurados")});
   var CHAVE="rcon-diagnostico-v1";
-  function salvar(){try{var d={plano:st.plano,bdrIa:st.bdrIa,aCop:st.aCop,aSdr:st.aSdr,aBdr:st.aBdr,ciclo:st.ciclo,margem:st.margem,crm:st.crm,sdrIa:st.sdrIa,temBdr:st.temBdr,oculto:st.oculto};CAMPOS.forEach(function(k){d[k]=$(k).value});localStorage.setItem(CHAVE,JSON.stringify(d));}catch(e){}}
+  function salvar(){try{var d={coord:st.coord,plano:st.plano,bdrIa:st.bdrIa,aCop:st.aCop,aSdr:st.aSdr,aBdr:st.aBdr,ciclo:st.ciclo,margem:st.margem,crm:st.crm,sdrIa:st.sdrIa,temBdr:st.temBdr,oculto:st.oculto};CAMPOS.forEach(function(k){d[k]=$(k).value});localStorage.setItem(CHAVE,JSON.stringify(d));}catch(e){}}
   function carregar(){try{var d=JSON.parse(localStorage.getItem(CHAVE)||"null");if(d){aplicar(d);if(d.oculto)setOculto(true);}}catch(e){}}
 
   function resumo(){
@@ -586,8 +622,11 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
     else t+="  Qualificação: SDR IA\n";
     if(R.usaBdr) t+= R.bdrIa ? "  BDRs: prospecção feita pelo BDR IA\n" : "  BDRs: "+int(R.bdrNec)+" (hoje "+int(R.bdrAt)+")\n";
     t+="CRM: "+(st.crm==="sim"?"já usa":"precisa implantar")+"\n";
-    if(R.fatAt>0) t+="\nFaturamento hoje: "+brl(R.fatAt)+" por mês · deixa de gerar cerca de "+brl(R.gapMes)+" por mês ("+brl(R.gapMes*12)+" em 12 meses)\n";
-    t+="Montar a gestão e a pré-venda sozinho (CLT): cerca de "+brl(R.soMes)+" por mês + "+brl(R.soRec)+" de contratação\n";
+    t+="Coordenador ou gestor comercial hoje: "+(R.temCoord?"sim":"não")+"\n";
+    if(R.fatAt>0) t+="\nFaturamento hoje: "+brl(R.fatAt)+" por mês · faltam cerca de "+brl(R.gapMes)+" por mês para a meta ("+brl(R.gapMes*12)+" em 12 meses)\n";
+    if(R.doisCam.length) t+="A contratar em qualquer caminho: "+R.doisCam.join(", ")+"\n";
+    t+= R.soMes>0 ? "Completar o restante contratando (CLT): cerca de "+brl(R.soMes)+" por mês + "+brl(R.soRec)+" de contratação\n" : "Nas funções que a R&CON cobre, o time atual já está completo\n";
+    t+="O time atual continua: a R&CON complementa, não substitui.\n";
     t+="\nEstimativa feita com modelos estatísticos e médias de mercado. Não é garantia de lucro nem de resultados futuros exatos.\n";
     return t;
   }
