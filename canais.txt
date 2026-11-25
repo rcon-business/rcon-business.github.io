@@ -1,0 +1,460 @@
+/* =====================================================================
+ * R&CON Business · Canais de mensagem (WhatsApp e Instagram Direct)
+ * O mesmo agente do site atende as mensagens que chegam pela Meta
+ * (WhatsApp Cloud API e Instagram API com login do Instagram).
+ *
+ * Propriedades do script (Configurações do projeto > Propriedades):
+ *   META_VERIFY_TOKEN   texto qualquer, igual ao "Verify token" do webhook no app da Meta
+ *   WA_TOKEN            token de acesso permanente do WhatsApp (usuário do sistema)
+ *   WA_PHONE_ID         "Phone number ID" do número do WhatsApp
+ *   IG_TOKEN            token de acesso do Instagram (@rcon.business). No app novo (login unificado)
+ *                       é um token de usuário do sistema que não expira
+ *   IG_USER_ID          id da conta do Instagram (17841405716289798)
+ *   IG_API_HOST         graph.facebook.com (login unificado, padrão) ou graph.instagram.com (login do Instagram)
+ *   RELAY_SECRET        (opcional) segredo compartilhado com o repassador da Cloudflare
+ * Nunca cole tokens neste arquivo.
+ * ===================================================================== */
+
+const CANAIS = {
+  graphVersao: 'v27.0',
+  maxCaracteresWhats: 3500,
+  maxCaracteresInsta: 950,
+  pausaHumanoHoras: 12,     // se alguém da R&CON responder à mão no Instagram, o agente fica quieto nessa conversa
+  memoriaDias: 30           // reconstrói a conversa pela planilha até esse limite
+};
+
+/* ---------- Verificação do webhook (GET da Meta) ---------- */
+function verificarWebhookMeta_(e) {
+  const p = (e && e.parameter) || {};
+  if (p['hub.mode'] !== 'subscribe') return null;
+  const tok = PropertiesService.getScriptProperties().getProperty('META_VERIFY_TOKEN');
+  if (tok && p['hub.verify_token'] === tok) return ContentService.createTextOutput(String(p['hub.challenge'] || ''));
+  return ContentService.createTextOutput('token inválido');
+}
+
+/* ---------- Eventos que chegam da Meta (POST) ---------- */
+function ehEventoMeta_(body) {
+  return body && (body.object === 'whatsapp_business_account' || body.object === 'instagram' || body.object === 'page');
+}
+
+function receberMeta_(body, e) {
+  const props = PropertiesService.getScriptProperties();
+  const segredo = props.getProperty('RELAY_SECRET');
+  if (segredo && !(e && e.parameter && e.parameter.k === segredo)) return {ok: false};
+  if (props.getProperty('DEBUG_META') === '1') {
+    try {
+      const ss = planilha_();
+      const sh = ss.getSheetByName('Meta log') || ss.insertSheet('Meta log');
+      sh.appendRow([new Date(), JSON.stringify(body).slice(0, 4000)]);
+    } catch (err) { console.error(err); }
+  }
+  const msgs = body.object === 'whatsapp_business_account' ? lerWhats_(body) : lerInsta_(body);
+  msgs.forEach(function (m) {
+    try { atenderCanal_(m); } catch (err) { console.error('canal ' + m.canal, err && err.stack || err); }
+  });
+  return {ok: true};
+}
+
+function lerWhats_(body) {
+  const out = [];
+  (body.entry || []).forEach(function (en) {
+    (en.changes || []).forEach(function (ch) {
+      const v = ch.value || {};
+      const nomes = {};
+      (v.contacts || []).forEach(function (c) { nomes[c.wa_id] = c.profile && c.profile.name; });
+      (v.messages || []).forEach(function (m) {
+        let texto = '';
+        if (m.type === 'text') texto = m.text && m.text.body;
+        else if (m.type === 'button') texto = m.button && m.button.text;
+        else if (m.type === 'interactive') texto = (m.interactive.button_reply || m.interactive.list_reply || {}).title;
+        else texto = '[a pessoa mandou ' + ({audio: 'um áudio', image: 'uma imagem', video: 'um vídeo', document: 'um documento', sticker: 'uma figurinha', location: 'uma localização'}[m.type] || 'um conteúdo') + ']';
+        out.push({canal: 'whatsapp', de: m.from, id: m.id, texto: String(texto || ''), nome: nomes[m.from] || '', midia: m.type !== 'text' && m.type !== 'button' && m.type !== 'interactive'});
+      });
+    });
+  });
+  return out;
+}
+
+function lerInsta_(body) {
+  const out = [];
+  const props = PropertiesService.getScriptProperties();
+  (body.entry || []).forEach(function (en) {
+    const conta = String(en.id || '');
+    if (conta && !props.getProperty('IG_USER_ID')) props.setProperty('IG_USER_ID', conta);
+    (en.changes || []).forEach(function (ch) {
+      if (ch.field !== 'comments' || !ch.value) return;
+      const v = ch.value, autor = v.from || {};
+      if (!v.id || !autor.id || String(autor.id) === conta || String(autor.id) === props.getProperty('IG_USER_ID')) return;
+      if (v.parent_id) return;   // respostas dentro de outro comentário ficam para a equipe
+      out.push({canal: 'instagram', tipo: 'comentario', de: String(autor.id), id: 'c_' + v.id, comentarioId: v.id,
+        usuario: autor.username || '', texto: String(v.text || ''), midiaTipo: (v.media && v.media.media_product_type) || ''});
+    });
+    (en.messaging || []).forEach(function (ev) {
+      const m = ev.message;
+      if (!m || m.is_deleted || m.is_unsupported) return;
+      const remetente = String(ev.sender && ev.sender.id || '');
+      const destinatario = String(ev.recipient && ev.recipient.id || '');
+      if (m.is_echo) {
+        // Mensagem enviada pela própria conta. Se não foi o agente, alguém da equipe assumiu.
+        if (!foiOAgente_(m.mid)) pausarConversa_('ig_' + destinatario);
+        return;
+      }
+      let texto = m.text || '';
+      if (!texto && m.attachments && m.attachments.length) texto = '[a pessoa mandou ' + (m.attachments[0].type === 'audio' ? 'um áudio' : m.attachments[0].type === 'image' ? 'uma imagem' : 'um anexo') + ']';
+      if (!texto && m.quick_reply) texto = m.quick_reply.payload;
+      if (!texto) return;
+      out.push({canal: 'instagram', de: remetente, id: m.mid, texto: String(texto), nome: '', midia: !m.text});
+    });
+  });
+  return out;
+}
+
+/* ---------- Conversa ---------- */
+function atenderCanal_(m) {
+  if (!m.de || !m.id) return;
+  const cache = CacheService.getScriptCache();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    if (cache.get('meta_msg_' + m.id)) return;        // a Meta reenviou a mesma mensagem
+    cache.put('meta_msg_' + m.id, '1', 21600);
+  } finally { lock.releaseLock(); }
+
+  const sid = (m.canal === 'whatsapp' ? 'wa_' : 'ig_') + String(m.de).replace(/[^0-9A-Za-z]/g, '');
+  if (m.tipo === 'comentario') return atenderComentario_(m, sid);
+  if (conversaPausada_(sid)) { registrarConversa_(sid, 'visitante', m.texto); return; }
+
+  let texto = m.texto.trim().slice(0, CONFIG.maxCaracteresMensagem);
+  if (!texto) return;
+  if (m.canal === 'whatsapp') marcarLidaWhats_(m.id);
+
+  if (!contarMensagemDoDia_()) {
+    enviarCanal_(m.canal, m.de, 'Estamos com muito movimento agora. Deixe seu nome e o assunto que o time da R&CON responde em breve.');
+    return;
+  }
+
+  let estado = carregarEstado_(sid);
+  if (!estado) {
+    estado = novoEstado_({meta: {pagina: m.canal === 'whatsapp' ? 'WhatsApp' : 'Instagram Direct', utms: {utm_source: m.canal, utm_medium: 'mensagem'}}});
+    estado.canal = m.canal;
+    estado.mensagens = historicoDaPlanilha_(sid);
+    const linha = acharLinhaLead_(sid);
+    if (linha) { estado.linha = linha.row; Object.assign(estado.lead, linha.lead); estado.turnos = linha.turnos; }
+    if (m.canal === 'whatsapp' && !estado.lead.whatsapp) estado.lead.whatsapp = '+' + m.de;
+    if (m.nome && !estado.lead.nome) estado.contatoNome = m.nome;
+    if (m.canal === 'instagram' && !estado.instagram) estado.instagram = perfilInsta_(m.de);
+  }
+  estado.canal = m.canal;
+  if (estado.turnos >= CONFIG.maxMensagensPorConversa) {
+    if (!estado.avisouLimite) {
+      estado.avisouLimite = true;
+      salvarEstado_(sid, estado);
+      enviarCanal_(m.canal, m.de, 'Vou passar nossa conversa para um executivo da R&CON, que continua com você por aqui.');
+      avisarEquipe_('Conversa longa no ' + m.canal + ', precisa de uma pessoa', estado, sid);
+    }
+    registrarConversa_(sid, 'visitante', texto);
+    return;
+  }
+
+  if (m.canal === 'whatsapp') mostrarDigitandoWhats_(m.id);
+  const r = conversar_(sid, estado, texto);
+  let resposta = r.resposta;
+  if (r.ui.horarios && r.ui.horarios.length) {
+    resposta += '\n\n' + r.ui.horarios.map(function (h, i) { return (i + 1) + ') ' + h.label; }).join('\n');
+    estado.ultimosHorarios = r.ui.horarios;
+    salvarEstado_(sid, estado);
+  }
+  enviarCanal_(m.canal, m.de, resposta);
+}
+
+// Mesmo laço do chat do site (atender_), para canais sem botões.
+function conversar_(sid, estado, texto) {
+  estado.turnos++;
+  estado.mensagens.push({role: 'user', content: texto});
+  registrarConversa_(sid, 'visitante', texto);
+  const ui = {};
+  let resposta = '';
+  for (let volta = 0; volta < 6; volta++) {
+    const r = chamarClaude(estado.mensagens, contextoAgora_(estado) + contextoCanal_(estado));
+    if (r.stop_reason === 'refusal') {
+      estado.mensagens.pop();
+      salvarEstado_(sid, estado);
+      return {resposta: 'Não consigo ajudar com isso por aqui. Posso tirar dúvidas sobre a R&CON e os produtos, ou marcar uma conversa com um executivo.', ui: ui};
+    }
+    estado.mensagens.push({role: 'assistant', content: r.content});
+    const textos = r.content.filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; });
+    if (textos.length) resposta = textos.join('\n\n').trim();
+    const usos = r.content.filter(function (b) { return b.type === 'tool_use'; });
+    if (r.stop_reason !== 'tool_use' || !usos.length) break;
+    const resultados = usos.map(function (u) { return executarFerramenta_(u, estado, sid, ui); });
+    estado.mensagens.push({role: 'user', content: resultados});
+  }
+  if (!resposta) resposta = 'Pode me contar um pouco mais?';
+  registrarConversa_(sid, 'agente', resposta);
+  if (!estado.linha) {
+    try { gravarLead_(sid, estado); } catch (e) { console.error(e); }   // todo contato do direct/WhatsApp vira linha na planilha
+  }
+  salvarEstado_(sid, estado);
+  atualizarContagem_(sid, estado);
+  return {resposta: resposta, ui: ui};
+}
+
+function contextoCanal_(estado) {
+  const nomeCanal = estado.canal === 'whatsapp' ? 'WhatsApp' : 'Direct do Instagram (@rcon.business)';
+  let s = '\n\n# Canal desta conversa: ' + nomeCanal + '\n' +
+    'Esta conversa NÃO é no chat do site. Valem todas as regras acima, com estes ajustes:\n' +
+    '- Não existem botões. Quando você chamar buscar_horarios, o sistema coloca a lista numerada de horários logo depois da sua mensagem. Escreva só uma frase convidando a pessoa a responder com o número do horário (ou pedir outro dia ou período). Não repita a lista.\n' +
+    '- Quando a pessoa responder com um número ou com o dia e hora, use o id correspondente da lista abaixo em agendar_reuniao.\n' +
+    '- Mensagens ainda mais curtas que no site: uma a três frases.\n' +
+    '- Se a pessoa mandar áudio, imagem ou anexo, diga com naturalidade que por aqui você só consegue ler texto e peça para escrever.\n' +
+    '- Muita gente chega aqui por causa de um vídeo e manda só uma palavra (ex.: "caixa", "vendas", "IA"). Dê as boas-vindas, diga em uma frase o que aquele tema costuma esconder na empresa e faça uma pergunta para entender o caso da pessoa.';
+  if (estado.canal === 'whatsapp') s += '\n- O WhatsApp da pessoa já é este número (' + (estado.lead.whatsapp || '') + '). Não peça de novo; para marcar, peça só o e-mail. Use o WhatsApp deste número ao chamar agendar_reuniao.\n- Para destacar uma palavra use *assim*, nunca **assim**.';
+  if (estado.canal === 'instagram') s += '\n- No Instagram não use negrito nem markdown.' + (estado.instagram && estado.instagram.username ? ' O perfil da pessoa é @' + estado.instagram.username + (estado.instagram.name ? ' (' + estado.instagram.name + ')' : '') + '.' : '');
+  if (estado.contatoNome) s += '\n- Nome no perfil do WhatsApp: ' + estado.contatoNome + ' (confirme antes de usar como nome da pessoa).';
+  if (estado.ultimosHorarios && estado.ultimosHorarios.length) {
+    s += '\nÚltima lista de horários enviada: ' + estado.ultimosHorarios.map(function (h, i) { return (i + 1) + ' = ' + h.label + ' (id ' + h.id + ')'; }).join('; ') + '.';
+  }
+  return s;
+}
+
+/* ---------- Comentários nos posts e Reels ---------- */
+// Responde o comentário em público (frase curta, variada para não parecer spam) e manda
+// uma mensagem no direct (resposta privada, vale até 7 dias depois do comentário).
+const RESPOSTAS_PUBLICAS = [
+  'Te mandei no direct{n}! Dá uma olhada lá.',
+  'Chegou no seu direct{n}. Qualquer dúvida, é só responder por lá.',
+  'Mandei o próximo passo no seu direct{n}.',
+  'Te chamei no direct{n}, vamos conversar por lá.'
+];
+
+function atenderComentario_(m, sid) {
+  const props = PropertiesService.getScriptProperties();
+  const texto = m.texto.trim().slice(0, 500);
+  if (!texto) return;
+  registrarConversa_(sid, 'visitante', '[comentário' + (m.midiaTipo ? ' em ' + m.midiaTipo : '') + '] ' + texto);
+  if (conversaPausada_(sid)) return;
+
+  // Uma resposta por pessoa a cada 12 h, para não lotar o post nem o direct
+  const cache = CacheService.getScriptCache();
+  if (cache.get('coment_' + sid)) return;
+  cache.put('coment_' + sid, '1', 12 * 3600);
+  if (!contarMensagemDoDia_()) return;
+
+  let estado = carregarEstado_(sid);
+  if (!estado) {
+    estado = novoEstado_({meta: {pagina: 'Instagram · comentário', utms: {utm_source: 'instagram', utm_medium: 'comentario'}}});
+    estado.mensagens = historicoDaPlanilha_(sid);
+    const linha = acharLinhaLead_(sid);
+    if (linha) { estado.linha = linha.row; Object.assign(estado.lead, linha.lead); estado.turnos = linha.turnos; }
+  }
+  estado.canal = 'instagram';
+  estado.instagram = estado.instagram || {};
+  if (m.usuario) estado.instagram.username = m.usuario;
+
+  const pedido = '[A pessoa comentou "' + texto + '" num ' + (m.midiaTipo === 'REELS' ? 'Reels' : 'post') +
+    ' da R&CON. Esta é a primeira mensagem que você manda no direct dela, em resposta a esse comentário. ' +
+    'Se o comentário for uma palavra-chave de vídeo (ex.: CAIXA, VENDAS, IA), entregue em 2 ou 3 frases a dica prometida sobre esse tema ' +
+    'e termine com uma pergunta sobre a empresa dela. Se for elogio, dúvida ou outra coisa, agradeça ou responda em uma frase e faça uma pergunta. ' +
+    'Se for ofensa ou spam, responda só "ok".]';
+  const r = conversar_(sid, estado, pedido);
+  if (/^ok\.?$/i.test(r.resposta.trim())) return;
+
+  const nome = m.usuario ? ', @' + m.usuario : '';
+  const publica = RESPOSTAS_PUBLICAS[Math.floor(Math.random() * RESPOSTAS_PUBLICAS.length)].replace('{n}', nome);
+  const tok = props.getProperty('IG_TOKEN');
+  graph_(igBase_() + '/' + m.comentarioId + '/replies', {message: publica}, tok);
+  const d = graph_(igMensagensUrl_(),
+    {recipient: {comment_id: m.comentarioId}, message: {text: dividir_(limparFormato_(r.resposta, 'instagram'), CANAIS.maxCaracteresInsta)[0]}}, tok);
+  if (d && d.message_id) cache.put('enviada_' + d.message_id, '1', 21600);
+}
+
+/* ---------- Memória longa: reconstrói pela planilha ---------- */
+function historicoDaPlanilha_(sid) {
+  try {
+    const sh = planilha_().getSheetByName('Conversas');
+    const achados = sh.getRange('B:B').createTextFinder(sid).matchEntireCell(true).findAll();
+    if (!achados.length) return [];
+    const ultimos = achados.slice(-20);
+    const limite = Date.now() - CANAIS.memoriaDias * 86400000;
+    const hist = ultimos.map(function (c) {
+      const v = sh.getRange(c.getRow(), 1, 1, 4).getValues()[0];
+      return {quando: v[0], quem: v[2] === 'agente' ? 'agente' : 'visitante', texto: String(v[3] || '')};
+    }).filter(function (h) {
+      const d = h.quando instanceof Date ? h.quando.getTime() : Date.now();
+      return d >= limite;
+    });
+    const msgs = reconstruir_(hist);
+    return msgs;
+  } catch (e) { console.error(e); return []; }
+}
+
+function acharLinhaLead_(sid) {
+  try {
+    const sh = planilha_().getSheetByName('Leads');
+    const c = sh.getRange('C:C').createTextFinder(sid).matchEntireCell(true).findNext();
+    if (!c) return null;
+    const v = sh.getRange(c.getRow(), 1, 1, 22).getValues()[0];
+    const inv = function (mapa, valor) { return Object.keys(mapa).filter(function (k) { return mapa[k] === valor; })[0] || ''; };
+    const lead = {nome: v[3], empresa: v[4], segmento: v[5], cargo: v[6], decisor: v[7], faturamento_faixa: inv(FAIXAS, v[8]),
+      desafio_principal: v[10], produto_indicado: inv(PRODUTOS, v[11]), momento: v[12], whatsapp: String(v[13] || ''),
+      email: v[14], temperatura: v[15], resumo: v[20]};
+    Object.keys(lead).forEach(function (k) { if (lead[k] === '' || lead[k] == null) delete lead[k]; });
+    return {row: c.getRow(), lead: lead, turnos: Number(v[21] || 0)};
+  } catch (e) { console.error(e); return null; }
+}
+
+/* ---------- Pausa quando uma pessoa assume ---------- */
+function pausarConversa_(sid) {
+  CacheService.getScriptCache().put('pausa_' + sid, '1', CANAIS.pausaHumanoHoras * 3600);
+}
+function conversaPausada_(sid) {
+  return !!CacheService.getScriptCache().get('pausa_' + sid);
+}
+function foiOAgente_(mid) {
+  return !!(mid && CacheService.getScriptCache().get('enviada_' + mid));
+}
+
+/* ---------- Envio ---------- */
+function igBase_() {
+  const p = PropertiesService.getScriptProperties();
+  return 'https://' + (p.getProperty('IG_API_HOST') || 'graph.facebook.com') + '/' + CANAIS.graphVersao;
+}
+function igMensagensUrl_() {
+  const p = PropertiesService.getScriptProperties();
+  return igBase_() + '/' + (p.getProperty('IG_USER_ID') || 'me') + '/messages';
+}
+
+function enviarCanal_(canal, para, texto) {
+  const partes = dividir_(limparFormato_(texto, canal), canal === 'whatsapp' ? CANAIS.maxCaracteresWhats : CANAIS.maxCaracteresInsta);
+  partes.forEach(function (p) { if (canal === 'whatsapp') enviarWhats_(para, p); else enviarInsta_(para, p); });
+}
+
+function limparFormato_(t, canal) {
+  t = String(t || '').replace(/^#+\s*/gm, '');
+  if (canal === 'whatsapp') return t.replace(/\*\*(.+?)\*\*/g, '*$1*');
+  return t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/(^|\s)\*(\S[^*]*\S)\*(?=\s|$|[.,!?])/g, '$1$2');
+}
+
+function dividir_(t, max) {
+  if (t.length <= max) return [t];
+  const out = [];
+  let resto = t;
+  while (resto.length > max) {
+    let corte = resto.lastIndexOf('\n', max);
+    if (corte < max * 0.5) corte = resto.lastIndexOf('. ', max) + 1;
+    if (corte < max * 0.5) corte = max;
+    out.push(resto.slice(0, corte).trim());
+    resto = resto.slice(corte).trim();
+  }
+  if (resto) out.push(resto);
+  return out;
+}
+
+function graph_(url, payload, token) {
+  const r = UrlFetchApp.fetch(url, {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: {Authorization: 'Bearer ' + token}, payload: JSON.stringify(payload)
+  });
+  const code = r.getResponseCode();
+  let data = {};
+  try { data = JSON.parse(r.getContentText()); } catch (e) { /* vazio */ }
+  if (code >= 300) console.error('Meta ' + code + ' ' + url.replace(/access_token=[^&]+/, '') + ' ' + r.getContentText().slice(0, 500));
+  return data;
+}
+
+function enviarWhats_(para, texto) {
+  const p = PropertiesService.getScriptProperties();
+  const tok = p.getProperty('WA_TOKEN'), phone = p.getProperty('WA_PHONE_ID');
+  if (!tok || !phone) throw new Error('Falta WA_TOKEN ou WA_PHONE_ID');
+  return graph_('https://graph.facebook.com/' + CANAIS.graphVersao + '/' + phone + '/messages',
+    {messaging_product: 'whatsapp', recipient_type: 'individual', to: para, type: 'text', text: {preview_url: true, body: texto}}, tok);
+}
+
+function marcarLidaWhats_(id) {
+  try {
+    const p = PropertiesService.getScriptProperties();
+    graph_('https://graph.facebook.com/' + CANAIS.graphVersao + '/' + p.getProperty('WA_PHONE_ID') + '/messages',
+      {messaging_product: 'whatsapp', status: 'read', message_id: id}, p.getProperty('WA_TOKEN'));
+  } catch (e) { /* não é essencial */ }
+}
+
+function mostrarDigitandoWhats_(id) {
+  try {
+    const p = PropertiesService.getScriptProperties();
+    graph_('https://graph.facebook.com/' + CANAIS.graphVersao + '/' + p.getProperty('WA_PHONE_ID') + '/messages',
+      {messaging_product: 'whatsapp', status: 'read', message_id: id, typing_indicator: {type: 'text'}}, p.getProperty('WA_TOKEN'));
+  } catch (e) { /* não é essencial */ }
+}
+
+function enviarInsta_(para, texto) {
+  const p = PropertiesService.getScriptProperties();
+  const tok = p.getProperty('IG_TOKEN');
+  if (!tok) throw new Error('Falta IG_TOKEN');
+  const d = graph_(igMensagensUrl_(),
+    {recipient: {id: para}, message: {text: texto}}, tok);
+  if (d && d.message_id) CacheService.getScriptCache().put('enviada_' + d.message_id, '1', 21600);
+  return d;
+}
+
+function perfilInsta_(igsid) {
+  try {
+    const tok = PropertiesService.getScriptProperties().getProperty('IG_TOKEN');
+    const r = UrlFetchApp.fetch(igBase_() + '/' + igsid + '?fields=name,username', {
+      muteHttpExceptions: true, headers: {Authorization: 'Bearer ' + tok}});
+    if (r.getResponseCode() !== 200) return {};
+    const d = JSON.parse(r.getContentText());
+    return {username: d.username || '', name: d.name || ''};
+  } catch (e) { return {}; }
+}
+
+/* ---------- Manutenção ---------- */
+// Renova o token do Instagram (vale 60 dias). Fica num acionador semanal criado por instalarCanais().
+function renovarTokenInsta() {
+  const p = PropertiesService.getScriptProperties();
+  const tok = p.getProperty('IG_TOKEN');
+  if (!tok || p.getProperty('IG_API_HOST') !== 'graph.instagram.com') return;   // token do usuário do sistema não expira
+  const r = UrlFetchApp.fetch('https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=' + encodeURIComponent(tok), {muteHttpExceptions: true});
+  if (r.getResponseCode() === 200) {
+    const d = JSON.parse(r.getContentText());
+    if (d.access_token) p.setProperty('IG_TOKEN', d.access_token);
+  } else console.error('Renovação do token do Instagram falhou: ' + r.getContentText().slice(0, 300));
+}
+
+// Rode uma vez depois de colar os tokens: cria o acionador de renovação e testa o acesso.
+function instalarCanais() {
+  const p = PropertiesService.getScriptProperties();
+  if (!p.getProperty('META_VERIFY_TOKEN')) p.setProperty('META_VERIFY_TOKEN', 'rcon-' + Utilities.getUuid().slice(0, 8));
+  Logger.log('META_VERIFY_TOKEN (cole no app da Meta): ' + p.getProperty('META_VERIFY_TOKEN'));
+  const existe = ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'renovarTokenInsta'; });
+  if (!existe) ScriptApp.newTrigger('renovarTokenInsta').timeBased().everyDays(7).create();
+  if (p.getProperty('IG_TOKEN')) {
+    const r = UrlFetchApp.fetch(igBase_() + '/' + (p.getProperty('IG_USER_ID') || 'me') + '?fields=id,username', {
+      muteHttpExceptions: true, headers: {Authorization: 'Bearer ' + p.getProperty('IG_TOKEN')}});
+    Logger.log('Instagram: ' + r.getContentText());
+    try { const d = JSON.parse(r.getContentText()); if (d.user_id) p.setProperty('IG_USER_ID', String(d.user_id)); } catch (e) { /* */ }
+  } else Logger.log('Instagram: falta IG_TOKEN');
+  if (p.getProperty('WA_TOKEN') && p.getProperty('WA_PHONE_ID')) {
+    const r = UrlFetchApp.fetch('https://graph.facebook.com/' + CANAIS.graphVersao + '/' + p.getProperty('WA_PHONE_ID') + '?fields=display_phone_number,verified_name,quality_rating', {
+      muteHttpExceptions: true, headers: {Authorization: 'Bearer ' + p.getProperty('WA_TOKEN')}});
+    Logger.log('WhatsApp: ' + r.getContentText());
+  } else Logger.log('WhatsApp: falta WA_TOKEN ou WA_PHONE_ID');
+}
+
+// Simula uma mensagem para testar sem a Meta (não envia nada: só mostra a resposta no registro).
+function testarCanalSemEnviar() {
+  const sid = 'wa_teste' + Date.now();
+  const estado = novoEstado_({meta: {pagina: 'WhatsApp', utms: {utm_source: 'whatsapp', utm_medium: 'teste'}}});
+  estado.canal = 'whatsapp';
+  estado.lead.whatsapp = '+5521999999999';
+  Logger.log(conversar_(sid, estado, 'caixa').resposta);
+}
+
+// Testa o acesso do Instagram: conta, últimas conversas e últimos posts. Veja o resultado no registro.
+function testarInstagram() {
+  const p = PropertiesService.getScriptProperties();
+  const tok = p.getProperty('IG_TOKEN'), id = p.getProperty('IG_USER_ID');
+  ['?fields=id,username,name', '/conversations?platform=instagram&limit=2', '/media?fields=id,caption,timestamp&limit=3'].forEach(function (q) {
+    const r = UrlFetchApp.fetch(igBase_() + '/' + id + q, {muteHttpExceptions: true, headers: {Authorization: 'Bearer ' + tok}});
+    Logger.log(q + ' -> ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 600));
+  });
+}
